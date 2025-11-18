@@ -38,6 +38,19 @@ def _rounded_image_html(path, width=120):
     except Exception:
         return ""
 
+
+def make_bingo_grid(items, cols=3, rows=5):
+    """Retorna uma lista de linhas (cada linha é lista de tamanho `cols`) preenchida com
+    os primeiros `cols*rows` itens de `items`. Se houver menos itens, preenche com None.
+    """
+    total = cols * rows
+    sliced = list(items)[:total]
+    # pad
+    while len(sliced) < total:
+        sliced.append(None)
+    grid = [sliced[i * cols:(i + 1) * cols] for i in range(rows)]
+    return grid
+
 participantes = load_json("participantes.json")
 personagens = participantes["personagens"]
 nomes_reais = participantes["nomes_reais"]
@@ -76,19 +89,28 @@ if menu == "Fazer Aposta":
 
         st.write("Preencha a possível identidade de cada personagem:")
 
-        for p in personagens:
-            default = saved.get(p) if p in saved else None
-            if default in nomes_reais:
-                idx = nomes_reais.index(default)
-            else:
-                idx = 0
-            sel = st.selectbox(
-                f"Quem você acha que é *{p}*?",
-                nomes_reais,
-                index=idx,
-                key=f"ap_{user_id}_{p}"
-            )
-            aposta_temp[p] = sel
+        # monta cartela 3x5
+        grid = make_bingo_grid(personagens, cols=3, rows=5)
+        for row in grid:
+            cols = st.columns(3)
+            for col, p in zip(cols, row):
+                with col:
+                    if p:
+                        st.markdown(f"**{p}**")
+                        default = saved.get(p) if p in saved else None
+                        if default in nomes_reais:
+                            idx = nomes_reais.index(default)
+                        else:
+                            idx = 0
+                        sel = st.selectbox(
+                            "",
+                            nomes_reais,
+                            index=idx,
+                            key=f"ap_{user_id}_{p}"
+                        )
+                        aposta_temp[p] = sel
+                    else:
+                        st.write("")
 
         if st.button("Salvar minhas apostas"):
             apostas[user_id] = aposta_temp
@@ -106,8 +128,25 @@ elif menu == "Revelar Identidades":
     if senha == "admin123":  # você pode trocar
         st.success("Acesso liberado!")
 
-        for p in personagens:
-            revelacoes[p] = st.selectbox(f"{p} é na verdade:", ["Ainda não revelado"] + nomes_reais)
+        st.write("Selecione as revelações oficiais:")
+        # monta cartela 3x5 para revelações
+        grid = make_bingo_grid(personagens, cols=3, rows=5)
+        for row in grid:
+            cols = st.columns(3)
+            for col, p in zip(cols, row):
+                with col:
+                    if p:
+                        st.markdown(f"**{p}**")
+                        options = ["Ainda não revelado"] + nomes_reais
+                        current = revelacoes.get(p, "Ainda não revelado")
+                        try:
+                            idx = options.index(current)
+                        except ValueError:
+                            idx = 0
+                        sel = st.selectbox("", options, index=idx, key=f"rev_{p}")
+                        revelacoes[p] = sel
+                    else:
+                        st.write("")
 
         if st.button("Confirmar Revelações"):
             save_json("revelacoes.json", revelacoes)
