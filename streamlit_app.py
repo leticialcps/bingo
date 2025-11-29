@@ -27,13 +27,19 @@ def _rounded_image_html(path, width=120):
     try:
         if not path:
             return ""
+        # se for uma URL, usa src direto (não embutir)
+        if isinstance(path, str) and path.startswith(("http://", "https://")):
+            src = path
+            html = f'<img src="{src}" style="border-radius:50%; width:{width}px; height:{width}px; object-fit:cover; background: transparent;"/>'
+            return html
+        # caso contrário, tenta ler arquivo local e embutir em base64
         with open(path, "rb") as f:
             data = f.read()
         b64 = base64.b64encode(data).decode("utf-8")
         mime, _ = mimetypes.guess_type(path)
         if mime is None:
             mime = "image/png"
-        html = f'<img src="data:{mime};base64,{b64}" style="border-radius:50%; width:{width}px; height:{width}px; object-fit:cover;"/>'
+        html = f'<img src="data:{mime};base64,{b64}" style="border-radius:50%; width:{width}px; height:{width}px; object-fit:cover; background: transparent;"/>'
         return html
     except Exception:
         return ""
@@ -59,17 +65,200 @@ apostas = load_json("apostas.json")
 revelacoes = load_json("revelacoes.json")
 identidades = load_json("identidades.json")
 
-st.set_page_config(page_title="Amigo Secreto - Bingo", layout="centered")
-st.title("🎁 Bingo Amigo Secreto - Descubra Quem é Quem!")
+st.set_page_config(page_title="Amigo Secreto Swifities Idosos!", layout="centered")
+
+# Adiciona imagem de fundo + estilo do título com glitter laranja suave e contorno preto
+st.markdown(
+    '''
+    <style>
+    .stApp {
+        background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXKOiGBTCBwZQg0_RpXfxQQ268gOg6jIiIeA&s");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+        /* Suaviza contraste para melhor leitura */
+        box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.25);
+        position: relative;
+    }
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXKOiGBTCBwZQg0_RpXfxQQ268gOg6jIiIeA&s");
+        background-size: cover;
+        background-position: center center;
+        background-attachment: fixed;
+        filter: blur(2px);
+        z-index: -1;
+    }
+    /* Deixa caixas principais mais legíveis */
+    .stMarkdown, .stDataFrame, .stTextInput, .stSelectbox, .stButton, .stHeader, .stSubheader, .stRadio, .stAlert {
+        background: rgba(255,255,255,0.9) !important;
+        border-radius: 12px;
+        padding: 12px 16px !important;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    /* Textos gerais - mais legíveis */
+    .stMarkdown, p, span, label, .stText {
+        color: #1a1a1a !important;
+        font-size: 1.05em;
+        line-height: 1.6;
+    }
+    /* Headers e subheaders */
+    h2, h3, h4, h5, h6, .stHeader, .stSubheader {
+        color: #ff8800 !important;
+        font-weight: bold;
+        text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+    }
+    /* Selectbox e input mais legíveis */
+    .stSelectbox > div > div, .stTextInput > div > div {
+        background: white !important;
+    }
+    input, select, textarea {
+        color: #1a1a1a !important;
+        background: white !important;
+        border: 2px solid #ff8800 !important;
+        border-radius: 8px;
+    }
+    /* Selectbox aumentado */
+    .stSelectbox {
+        font-size: 1.2em !important;
+    }
+    .stSelectbox > div > div > div > div {
+        min-height: 50px !important;
+        padding: 15px !important;
+    }
+    select {
+        min-height: 50px !important;
+        padding: 12px !important;
+        font-size: 1.1em !important;
+        color: #1a1a1a !important;
+    }
+    /* Força texto escuro em todos os selects, opções e entradas do selectbox */
+    .stSelectbox div[data-baseweb="select"] * {
+        color: #1a1a1a !important;
+        background: white !important;
+        font-weight: 600 !important;
+    }
+    .stSelectbox input::placeholder {
+        color: #1a1a1a !important;
+        opacity: 1 !important;
+    }
+    .stSelectbox input {
+        color: #1a1a1a !important;
+        background: white !important;
+        font-weight: 600 !important;
+    }
+    .stSelectbox span {
+        color: #1a1a1a !important;
+        font-weight: 600 !important;
+    }
+    /* Remove fundo branco das imagens */
+    .stMarkdown img {
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    /* Markdown contendo imagens sem fundo branco */
+    .stMarkdown:has(img) {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    /* Título laranja elegante com glitter sofisticado estilo tipografia */
+    h1 {
+        color: #ff8800;
+        font-family: 'Georgia', 'Garamond', 'Palatino', serif;
+        font-weight: bold;
+        font-style: italic;
+        letter-spacing: 2px;
+        text-shadow: 
+            -1px -1px 0 rgba(0,0,0,0.2),
+            1px -1px 0 rgba(0,0,0,0.2),
+            -1px 1px 0 rgba(0,0,0,0.2),
+            1px 1px 0 rgba(0,0,0,0.2),
+            0 0 10px rgba(255, 200, 100, 0.6),
+            0 0 20px rgba(255, 150, 50, 0.4),
+            0 0 30px rgba(255, 200, 100, 0.3);
+        font-size: 2.8em;
+        animation: elegant-glitter 3.5s ease-in-out infinite;
+    }
+    @keyframes elegant-glitter {
+        0%, 100% { 
+            filter: brightness(0.9) drop-shadow(0 0 6px rgba(255, 200, 100, 0.4));
+        }
+        25% { 
+            filter: brightness(1.15) drop-shadow(0 0 12px rgba(255, 200, 100, 0.6));
+        }
+        50% { 
+            filter: brightness(1.05) drop-shadow(0 0 16px rgba(255, 150, 50, 0.5));
+        }
+        75% { 
+            filter: brightness(1.2) drop-shadow(0 0 14px rgba(255, 200, 100, 0.6));
+        }
+    }
+    h2, h3, .stTitle {
+        color: #b71c1c;
+        text-shadow: 1px 1px 0 #fff, 2px 2px 4px #388e3c44;
+    }
+    /* Botões - Branco com efeito laranja ao clicar */
+    .stButton > button {
+        background: white !important;
+        color: #ff8800 !important;
+        font-weight: bold;
+        border-radius: 8px;
+        border: 2px solid #ff8800 !important;
+        padding: 12px 24px;
+        box-shadow: 0 4px 8px rgba(255, 136, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background: rgba(255, 136, 0, 0.1) !important;
+        box-shadow: 0 6px 16px rgba(255, 136, 0, 0.4) !important;
+        transform: translateY(-2px);
+    }
+    .stButton > button:active {
+        background: rgba(255, 136, 0, 0.2) !important;
+        box-shadow: 0 2px 8px rgba(255, 136, 0, 0.3) !important;
+    }
+    </style>
+    ''', unsafe_allow_html=True)
+
+st.title("Bingo Amigo Secreto Swifities Idosos")
+
 
 menu = st.sidebar.radio("Menu", ["Fazer Aposta", "Revelar Identidades", "Ranking"])
+
+# Detecta se está na tela inicial
+if menu == "Fazer Aposta":
+    st.markdown(
+        '''
+        <style>
+        .stApp {
+            background-image: url("https://i.pinimg.com/originals/00/ea/e1/00eae19fb5b8a573bd61d81d30270436.jpg") !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+            filter: none !important;
+        }
+        .stApp::before {
+            filter: none !important;
+        }
+        </style>
+        ''', unsafe_allow_html=True)
 
 # -----------------------------------------------
 # Página - Apostas
 # -----------------------------------------------
 if menu == "Fazer Aposta":
 
-    st.header("🕵️ Faça suas apostas")
+    st.header("✨Faça suas apostas:✨")
     st.write("Você receberá um código anônimo para usar depois no ranking.")
 
     user_id = st.text_input("Digite seu código (ou deixe em branco para gerar)")
@@ -96,34 +285,69 @@ if menu == "Fazer Aposta":
             for col, p in zip(cols, row):
                 with col:
                     if p:
-                        st.markdown(f"**{p}**")
+                        # Container padronizado para cada personagem
+                        st.markdown(
+                            f"""
+                            <div style='text-align: center; background: rgba(255,255,255,0.9); 
+                            border-radius: 12px; padding: 16px; margin-bottom: 12px; 
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.2);'>
+                                <b style='color: #1a1a1a; font-size: 1.1em;'>{p}</b>
+                            </div>
+                            """, 
+                            unsafe_allow_html=True
+                        )
+                        
+                        # mostra foto arredondada (se houver) - CENTRALIZADA
+                        foto = None
+                        if isinstance(identidades, dict):
+                            data = identidades.get(p, {})
+                            foto = data.get("foto") if isinstance(data, dict) else None
+                        if foto:
+                            try:
+                                html = _rounded_image_html(foto, width=120)
+                                if html:
+                                    st.markdown(f"<div style='text-align: center; margin: 8px 0;'>{html}</div>", unsafe_allow_html=True)
+                            except Exception:
+                                pass
+
+                        options = ["Faça sua aposta"] + nomes_reais
                         default = saved.get(p) if p in saved else None
                         if default in nomes_reais:
-                            idx = nomes_reais.index(default)
+                            # opções tem o nome real deslocado em 1 por causa da label inicial
+                            idx = options.index(default)
                         else:
                             idx = 0
                         sel = st.selectbox(
-                            "",
-                            nomes_reais,
+                            f"Quem é {p}?",
+                            options,
                             index=idx,
-                            key=f"ap_{user_id}_{p}"
+                            key=f"ap_{user_id}_{p}",
+                            label_visibility="collapsed"
                         )
-                        aposta_temp[p] = sel
+                        # não salvar a label de instrução como aposta
+                        aposta_temp[p] = "" if sel == "Faça sua aposta" else sel
                     else:
                         st.write("")
 
-        if st.button("Salvar minhas apostas"):
-            apostas[user_id] = aposta_temp
-            save_json("apostas.json", apostas)
-            st.success("Apostas registradas com sucesso!")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Salvar minhas apostas", use_container_width=True):
+                apostas[user_id] = aposta_temp
+                save_json("apostas.json", apostas)
+                st.success("Apostas registradas com sucesso!")
 
 # -----------------------------------------------
 # Página - Revelação (Admin)
 # -----------------------------------------------
 elif menu == "Revelar Identidades":
 
-    st.header("🔓 Revelação Oficial")
-    senha = st.text_input("Senha de admin:", type="password")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        st.header("🔓 Revelação Oficial")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        senha = st.text_input("Senha de admin:", type="password")
 
     if senha == "admin123":  # você pode trocar
         st.success("Acesso liberado!")
@@ -136,20 +360,46 @@ elif menu == "Revelar Identidades":
             for col, p in zip(cols, row):
                 with col:
                     if p:
-                        st.markdown(f"**{p}**")
+                        # Container padronizado para cada personagem
+                        st.markdown(
+                            f"""
+                            <div style='text-align: center; background: rgba(255,255,255,0.9); 
+                            border-radius: 12px; padding: 16px; margin-bottom: 12px; 
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.2);'>
+                                <b style='color: #1a1a1a; font-size: 1.1em;'>{p}</b>
+                            </div>
+                            """, 
+                            unsafe_allow_html=True
+                        )
+                        
+                        # mostra foto arredondada (se houver) - CENTRALIZADA
+                        foto = None
+                        if isinstance(identidades, dict):
+                            data = identidades.get(p, {})
+                            foto = data.get("foto") if isinstance(data, dict) else None
+                        if foto:
+                            try:
+                                html = _rounded_image_html(foto, width=120)
+                                if html:
+                                    st.markdown(f"<div style='text-align: center; margin: 8px 0;'>{html}</div>", unsafe_allow_html=True)
+                            except Exception:
+                                pass
+
                         options = ["Ainda não revelado"] + nomes_reais
                         current = revelacoes.get(p, "Ainda não revelado")
                         try:
                             idx = options.index(current)
                         except ValueError:
                             idx = 0
-                        sel = st.selectbox("", options, index=idx, key=f"rev_{p}")
+                        sel = st.selectbox("Quem é?", options, index=idx, key=f"rev_{p}", label_visibility="collapsed")
                         revelacoes[p] = sel
                     else:
                         st.write("")
 
-        if st.button("Confirmar Revelações"):
-            save_json("revelacoes.json", revelacoes)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Confirmar Revelações", use_container_width=True):
+                save_json("revelacoes.json", revelacoes)
             st.balloons()
             st.success("Revelações registradas!")
 
@@ -160,6 +410,23 @@ elif menu == "Revelar Identidades":
 # Página - Ranking
 # -----------------------------------------------
 elif menu == "Ranking":
+    st.markdown(
+        '''
+        <style>
+        .stApp {
+            background-image: url("https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2024/02/GettyImages-1986535927-e1707118230218.jpg?w=1200&h=900&crop=1") !important;
+            background-size: cover !important;
+            background-position: center top !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+            filter: none !important;
+        }
+        .stApp::before {
+            filter: none !important;
+        }
+        </style>
+        ''', unsafe_allow_html=True)
+
     st.header("🏆 Ranking Parcial / Final")
 
     if len(revelacoes) == 0 or all(v == "Ainda não revelado" for v in revelacoes.values()):
