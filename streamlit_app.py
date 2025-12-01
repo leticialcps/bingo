@@ -5,20 +5,20 @@ import os
 import base64
 import mimetypes
 from datetime import datetime
+from sheets_db import load_sheet_data, save_sheet_data
 
 # -----------------------------------------------
 # Funções utilitárias
 # -----------------------------------------------
 def load_json(path):
-    try:
-        with open(path, "r") as f:
-            return json.load(f)
-    except:
-        return {}
+    """Carrega dados - primeiro tenta Google Sheets, depois fallback para JSON local."""
+    sheet_name = path.replace('.json', '')
+    return load_sheet_data(sheet_name)
 
 def save_json(path, data):
-        with open(path, "w") as f:
-            json.dump(data, f, indent=4)
+    """Salva dados - primeiro tenta Google Sheets, depois fallback para JSON local."""
+    sheet_name = path.replace('.json', '')
+    save_sheet_data(sheet_name, data)
 
 
 def _rounded_image_html(path, width=120):
