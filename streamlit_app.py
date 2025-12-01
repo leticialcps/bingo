@@ -4,6 +4,7 @@ import uuid
 import os
 import base64
 import mimetypes
+from datetime import datetime
 
 # -----------------------------------------------
 # Funções utilitárias
@@ -64,6 +65,7 @@ nomes_reais = participantes["nomes_reais"]
 apostas = load_json("apostas.json")
 revelacoes = load_json("revelacoes.json")
 identidades = load_json("identidades.json")
+vinculos = load_json("codigos_identidade.json")
 
 st.set_page_config(page_title="Amigo Secreto Swifities Idosos!", layout="centered")
 
@@ -93,7 +95,6 @@ st.markdown(
         background-size: cover;
         background-position: center center;
         background-attachment: fixed;
-        filter: blur(2px);
         z-index: -1;
     }
     /* Deixa caixas principais mais legíveis */
@@ -272,6 +273,29 @@ if menu == "Fazer Aposta":
     if user_id:
         st.info(f"Você está apostando como: *{user_id}*")
 
+        # Vínculo do código ao nome real disponível apenas no dia 14/12
+        hoje = datetime.now()
+        pode_vincular = (hoje.day == 1 and hoje.month == 12)
+        if pode_vincular:
+            st.markdown("""
+            <div style='background: rgba(255,255,255,0.9); border-radius: 12px; padding: 16px; margin: 8px 0;'>
+                <b style='color:#ff8800'>Vincular código ao seu nome real (disponível hoje)</b>
+            </div>
+            """, unsafe_allow_html=True)
+
+            opcoes_nomes = ["Selecione seu nome real"] + nomes_reais
+            atual = vinculos.get(user_id)
+            idx_nome = opcoes_nomes.index(atual) if atual in nomes_reais else 0
+            nome_escolhido = st.selectbox(
+                "Seu nome real:", opcoes_nomes, index=idx_nome, key=f"vinc_{user_id}")
+            if st.button("Salvar vínculo", use_container_width=True, key=f"btn_vinc_{user_id}"):
+                if nome_escolhido == "Selecione seu nome real":
+                    st.warning("Selecione um nome válido para vincular.")
+                else:
+                    vinculos[user_id] = nome_escolhido
+                    save_json("codigos_identidade.json", vinculos)
+                    st.success(f"Código vinculado ao nome real: {nome_escolhido}")
+
         # Carrega apostas anteriores (se existirem) e pré-preenche os selectboxes
         aposta_temp = {}
         saved = apostas.get(user_id, {}) if isinstance(apostas, dict) else {}
@@ -340,6 +364,24 @@ if menu == "Fazer Aposta":
 # Página - Revelação (Admin)
 # -----------------------------------------------
 elif menu == "Revelar Identidades":
+
+    st.markdown(
+        '''
+        <style>
+        .stApp {
+            background-image: url("https://www.rollingstone.com/wp-content/uploads/2025/10/taylor-swift-takeaways.jpg?w=1581&h=1054&crop=1") !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+            filter: contrast(1.1) brightness(1.05) !important;
+        }
+        .stApp::before {
+            background-image: url("https://www.rollingstone.com/wp-content/uploads/2025/10/taylor-swift-takeaways.jpg?w=1581&h=1054&crop=1") !important;
+            filter: contrast(1.1) brightness(1.05) !important;
+        }
+        </style>
+        ''', unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -446,9 +488,25 @@ elif menu == "Ranking":
         resultados = sorted(resultados, key=lambda x: x[1], reverse=True)
 
         st.subheader("📈 Placares")
+        
+        # Verifica se hoje é 14/12 para revelar nomes reais independente das revelações
+        hoje = datetime.now()
+        dia_revelacao = (hoje.day == 1 and hoje.month == 12)
+        
         for i, (player, score, acertados) in enumerate(resultados, 1):
             medalha = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"
-            st.write(f"{medalha} *{player}* — {score} pontos")
+            nome_real_vinculado = vinculos.get(player)
+            
+            if dia_revelacao and nome_real_vinculado:
+                # No dia 14/12, mostra o nome real se o vínculo existir
+                exibicao = nome_real_vinculado
+            else:
+                # Fora do dia, revela o nome real somente se o personagem dessa pessoa já tiver sido revelado
+                nomes_revelados = set(v for v in revelacoes.values() if v != "Ainda não revelado")
+                pode_revelar_nome = nome_real_vinculado in nomes_revelados if nome_real_vinculado else False
+                exibicao = nome_real_vinculado if pode_revelar_nome else player
+            
+            st.write(f"{medalha} *{exibicao}* — {score} pontos")
 
             if acertados:
                 st.write("**Personagens acertados:**")
