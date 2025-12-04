@@ -564,6 +564,13 @@ elif menu == "Ranking":
         ''', unsafe_allow_html=True)
 
     st.header("🏆 Ranking")
+    
+    # Botão para recarregar dados
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("🔄 Atualizar Ranking", use_container_width=True):
+            carregar_todos_dados.clear()
+            st.rerun()
 
     if len(revelacoes) == 0 or all(v == "Ainda não revelado" for v in revelacoes.values()):
         st.info("Nenhuma revelação ainda.")
