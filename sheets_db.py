@@ -43,20 +43,18 @@ def get_spreadsheet():
         return None
     
     try:
-        # Tenta abrir a planilha pelo nome ou cria uma nova
-        sheet_name = st.secrets.get("sheet_name", "Bingo Amigo Secreto")
+        # Tenta abrir a planilha pelo nome
+        sheet_name = st.secrets.get("sheet_name", "dados_amigosecreto_idosos")
         try:
             spreadsheet = client.open(sheet_name)
+            return spreadsheet
         except gspread.SpreadsheetNotFound:
-            # Se não existir, cria uma nova planilha
-            spreadsheet = client.create(sheet_name)
-            # Compartilha com você para poder editar
-            spreadsheet.share('', perm_type='anyone', role='writer')
-            st.success(f"Nova planilha criada: {sheet_name}")
+            st.error(f"❌ Planilha '{sheet_name}' não encontrada no Google Sheets.")
+            st.info(f"Por favor, crie uma planilha chamada '{sheet_name}' e compartilhe com: {st.secrets['gcp_service_account']['client_email']}")
+            return None
         
-        return spreadsheet
-    except Exception:
-        # Erro silencioso - usa fallback JSON
+    except Exception as e:
+        st.error(f"Erro ao acessar planilha: {e}")
         return None
 
 def load_sheet_data(sheet_name):
