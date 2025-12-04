@@ -38,9 +38,11 @@ def get_google_sheets_client():
         # Outros erros - modo silencioso também
         return None
 
+@st.cache_resource
 def get_spreadsheet():
     """
     Retorna a planilha do Bingo ou None se não conseguir conectar.
+    Cached para evitar múltiplas chamadas.
     """
     client = get_google_sheets_client()
     if client is None:
@@ -61,6 +63,7 @@ def get_spreadsheet():
         st.error(f"Erro ao acessar planilha: {e}")
         return None
 
+@st.cache_data(ttl=60)  # Cache de 60 segundos
 def load_sheet_data(sheet_name):
     """
     Carrega dados de uma aba específica da planilha.

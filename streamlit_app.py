@@ -22,7 +22,11 @@ def load_json(path):
 def save_json(path, data):
     """Salva dados no Google Sheets (com fallback para JSON local)."""
     sheet_name = path.replace('.json', '')
-    return save_sheet_data(sheet_name, data)
+    result = save_sheet_data(sheet_name, data)
+    # Limpa cache após salvar para forçar reload
+    if result:
+        carregar_todos_dados.clear()
+    return result
 
 
 def _rounded_image_html(path, width=120):
@@ -62,15 +66,28 @@ def make_bingo_grid(items, cols=3, rows=5):
     grid = [sliced[i * cols:(i + 1) * cols] for i in range(rows)]
     return grid
 
-participantes = load_json("participantes.json")
+# Carrega dados uma única vez com cache
+@st.cache_data(ttl=60)
+def carregar_todos_dados():
+    """Carrega todos os dados de uma vez para evitar múltiplas chamadas à API."""
+    return {
+        "participantes": load_json("participantes.json"),
+        "apostas": load_json("apostas.json"),
+        "revelacoes": load_json("revelacoes.json"),
+        "identidades": load_json("identidades.json"),
+        "vinculos": load_json("codigos_identidade.json")
+    }
+
+# Carrega todos os dados
+dados = carregar_todos_dados()
+participantes = dados["participantes"]
 personagens = participantes.get("personagens", [])
 nomes_reais = participantes.get("nomes_reais", [])
 
-apostas = load_json("apostas.json")
-revelacoes = load_json("revelacoes.json")
-identidades = load_json("identidades.json")
-vinculos = load_json("codigos_identidade.json")
-participantes = load_json("participantes.json")
+apostas = dados["apostas"]
+revelacoes = dados["revelacoes"]
+identidades = dados["identidades"]
+vinculos = dados["vinculos"]
 
 st.set_page_config(page_title="Amigo Secreto Swifities Idosos!", layout="centered")
 
