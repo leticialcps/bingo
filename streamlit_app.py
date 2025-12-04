@@ -5,7 +5,7 @@ import os
 import base64
 import mimetypes
 from datetime import datetime
-from sheets_db import load_sheet_data, save_sheet_data
+from sheets_db import load_sheet_data, save_sheet_data, preview_sheet_structure
 
 # -----------------------------------------------
 # Funções utilitárias
@@ -70,6 +70,7 @@ apostas = load_json("apostas.json")
 revelacoes = load_json("revelacoes.json")
 identidades = load_json("identidades.json")
 vinculos = load_json("codigos_identidade.json")
+participantes = load_json("participantes.json")
 
 st.set_page_config(page_title="Amigo Secreto Swifities Idosos!", layout="centered")
 
@@ -258,6 +259,19 @@ except:
     sheets_ativo = False
     with st.sidebar:
         st.info("💡 Usando arquivos locais. Para dados persistentes, configure Google Sheets.")
+
+# Menu de debug (só aparece se Sheets estiver ativo)
+if sheets_ativo:
+    with st.sidebar:
+        with st.expander("🔍 Debug - Estrutura das Planilhas"):
+            if st.button("Ver estrutura de 'participantes'"):
+                info = preview_sheet_structure("participantes")
+                if info:
+                    st.json(info)
+            
+            if st.button("Recarregar dados do Google Sheets"):
+                st.cache_resource.clear()
+                st.rerun()
 
 menu = st.sidebar.radio("Menu", ["Fazer Aposta", "Revelar Identidades", "Ranking"])
 

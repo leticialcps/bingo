@@ -1,6 +1,10 @@
 """
 Módulo para integração com Google Sheets como banco de dados.
 Substitui os arquivos JSON por planilhas do Google Sheets.
+
+Formatos suportados:
+1. Key-Value: Coluna A = "key", Coluna B = "value" (formato JSON serializado)
+2. Tabular: Primeira linha = nomes das colunas, dados nas linhas seguintes
 """
 import streamlit as st
 import gspread
@@ -62,6 +66,10 @@ def load_sheet_data(sheet_name):
     Carrega dados de uma aba específica da planilha.
     Retorna um dicionário (equivalente ao JSON).
     Se a aba estiver vazia, sincroniza com dados do JSON local.
+    
+    Suporta dois formatos:
+    1. Formato key-value: coluna A = chave, coluna B = valor JSON
+    2. Formato tabular: primeira linha = headers, dados nas linhas seguintes
     """
     spreadsheet = get_spreadsheet()
     if spreadsheet is None:
@@ -84,31 +92,72 @@ def load_sheet_data(sheet_name):
                 return local_data
             return {}
         
-        # Lê todos os dados da aba
-        records = worksheet.get_all_records()
+        # Lê todos os valores da planilha
+        all_values = worksheet.get_all_values()
         
-        # Se a planilha estiver vazia (só headers), sincroniza com JSON local
-        if not records or len(records) == 0:
+        # Se estiver vazia, sincroniza com JSON local
+        if not all_values or len(all_values) <= 1:
             local_data = load_json_fallback(f"{sheet_name}.json")
             if local_data:
                 save_sheet_data(sheet_name, local_data)
                 return local_data
             return {}
         
-        # Converte para dicionário
-        result = {}
-        for record in records:
-            key = record.get('key')
-            value_str = record.get('value', '')
-            if key:
-                try:
-                    # Tenta fazer parse do JSON se o valor for um objeto/array
-                    result[key] = json.loads(value_str) if value_str else ''
-                except json.JSONDecodeError:
-                    result[key] = value_str
+        # Detecta o formato da planilha
+        headers = all_values[0] if all_values else []
         
-        return result
-    except Exception:
+        # Formato especial para apostas: ID | Personagem | Pessoa
+        if sheet_name == "apostas" and len(headers) >= 3 and headers[0].upper() == 'ID':
+            result = {}
+            for row in all_values[1:]:
+                if len(row) >= 3 and row[0] and row[1]:  # ID e Personagem obrigatórios
+                    user_id = row[0]
+                    personagem = row[1]
+                    pessoa = row[2] if len(row) > 2 else ''
+                    
+                    if user_id not in result:
+                        result[user_id] = {}
+                    result[user_id][personagem] = pessoa
+            return result
+        
+        # Formato key-value (usado pelo nosso sistema)
+        elif len(headers) >= 2 and headers[0].lower() in ['key', 'chave']:
+            result = {}
+            for row in all_values[1:]:
+                if len(row) >= 2:
+                    key = row[0]
+                    value_str = row[1] if len(row) > 1 else ''
+                    if key:
+                        try:
+                            # Tenta fazer parse do JSON se o valor for um objeto/array
+                            result[key] = json.loads(value_str) if value_str else ''
+                        except json.JSONDecodeError:
+                            result[key] = value_str
+            return result
+        
+        # Formato tabular genérico - tenta converter para estrutura apropriada
+        # Para participantes.json: espera colunas "personagens" e "nomes_reais"
+        else:
+            # Se tem colunas específicas, monta estrutura adequada
+            if headers:
+                # Verifica se é formato de lista simples (uma coluna)
+                if len(headers) == 1:
+                    return {headers[0]: [row[0] for row in all_values[1:] if row]}
+                
+                # Formato com múltiplas colunas - agrupa por coluna
+                result = {}
+                for col_idx, header in enumerate(headers):
+                    if header:  # Ignora headers vazios
+                        result[header] = [row[col_idx] if col_idx < len(row) else '' 
+                                         for row in all_values[1:] if row]
+                        # Remove valores vazios do final
+                        while result[header] and not result[header][-1]:
+                            result[header].pop()
+                return result
+            
+            return {}
+            
+    except Exception as e:
         # Erro silencioso - usa fallback JSON
         return load_json_fallback(f"{sheet_name}.json")
 
@@ -116,6 +165,9 @@ def save_sheet_data(sheet_name, data):
     """
     Salva dados em uma aba específica da planilha.
     data deve ser um dicionário (equivalente ao JSON).
+    
+    Para apostas: se data contém entradas como {user_id: {personagem: pessoa}},
+    salva em formato tabular com colunas ID, Personagem, Pessoa.
     """
     spreadsheet = get_spreadsheet()
     if spreadsheet is None:
@@ -132,19 +184,36 @@ def save_sheet_data(sheet_name, data):
         # Limpa a aba
         worksheet.clear()
         
-        # Prepara os dados para escrita
-        rows = [['key', 'value']]  # Header
-        for key, value in data.items():
-            # Converte valores complexos para JSON string
-            if isinstance(value, (dict, list)):
-                value_str = json.dumps(value, ensure_ascii=False)
+        # Formato especial para apostas: ID | Personagem | Pessoa
+        if sheet_name == "apostas" and isinstance(data, dict):
+            rows = [['ID', 'Personagem', 'Pessoa']]  # Headers
+            for user_id, palpites in data.items():
+                if isinstance(palpites, dict):
+                    for personagem, pessoa in palpites.items():
+                        if pessoa:  # Só salva se tiver uma pessoa escolhida
+                            rows.append([str(user_id), str(personagem), str(pessoa)])
+            
+            # Escreve todos os dados
+            if len(rows) > 1:  # Se tem dados além do header
+                worksheet.update(f'A1:C{len(rows)}', rows)
             else:
-                value_str = str(value)
-            rows.append([str(key), value_str])
+                worksheet.update('A1:C1', rows)  # Só o header
+            return True
         
-        # Escreve todos os dados de uma vez
-        worksheet.update(f'A1:B{len(rows)}', rows)
-        return True
+        # Formato key-value padrão para outros casos
+        else:
+            rows = [['key', 'value']]  # Header
+            for key, value in data.items():
+                # Converte valores complexos para JSON string
+                if isinstance(value, (dict, list)):
+                    value_str = json.dumps(value, ensure_ascii=False)
+                else:
+                    value_str = str(value)
+                rows.append([str(key), value_str])
+            
+            # Escreve todos os dados de uma vez
+            worksheet.update(f'A1:B{len(rows)}', rows)
+            return True
     except Exception:
         # Erro silencioso - usa fallback JSON
         return save_json_fallback(f"{sheet_name}.json", data)
@@ -166,3 +235,34 @@ def save_json_fallback(path, data):
         return True
     except:
         return False
+
+# Função auxiliar para debug
+def preview_sheet_structure(sheet_name, max_rows=5):
+    """
+    Mostra a estrutura da planilha para debug.
+    Retorna as primeiras linhas e headers detectados.
+    """
+    spreadsheet = get_spreadsheet()
+    if spreadsheet is None:
+        return None
+    
+    try:
+        worksheet = spreadsheet.worksheet(sheet_name)
+        all_values = worksheet.get_all_values()
+        
+        if not all_values:
+            return {"error": "Planilha vazia"}
+        
+        headers = all_values[0] if all_values else []
+        sample_data = all_values[1:min(max_rows + 1, len(all_values))]
+        
+        return {
+            "sheet_name": sheet_name,
+            "headers": headers,
+            "num_columns": len(headers),
+            "num_rows": len(all_values) - 1,
+            "sample_data": sample_data,
+            "format_detected": "key-value" if (len(headers) >= 2 and headers[0].lower() in ['key', 'chave']) else "tabular"
+        }
+    except Exception as e:
+        return {"error": str(e)}
