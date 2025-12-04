@@ -563,13 +563,61 @@ elif menu == "Ranking":
         </style>
         ''', unsafe_allow_html=True)
 
-    st.header("🏆 Ranking Parcial / Final")
+    st.header("🏆 Ranking")
 
     if len(revelacoes) == 0 or all(v == "Ainda não revelado" for v in revelacoes.values()):
         st.info("Nenhuma revelação ainda.")
     else:
+        # === SEÇÃO 1: PERSONAGENS REVELADOS ===
+        st.markdown("### 🎭 Personagens Revelados")
+        
+        # Conta quantas pessoas acertaram cada personagem
+        acertos_por_personagem = {}
+        for personagem, revelado in revelacoes.items():
+            if revelado != "Ainda não revelado":
+                acertos = 0
+                for apostador, palpites in apostas.items():
+                    if palpites.get(personagem) == revelado:
+                        acertos += 1
+                acertos_por_personagem[personagem] = (revelado, acertos)
+        
+        # Mostra em grid
+        if acertos_por_personagem:
+            cols_revelados = st.columns(3)
+            for idx, (personagem, (revelado, qtd_acertos)) in enumerate(acertos_por_personagem.items()):
+                with cols_revelados[idx % 3]:
+                    # Pega foto do personagem
+                    foto = None
+                    if isinstance(identidades, dict):
+                        data = identidades.get(personagem, {})
+                        foto = data.get("foto") if isinstance(data, dict) else None
+                    
+                    foto_html = ""
+                    if foto:
+                        try:
+                            foto_html = _rounded_image_html(foto, width=80)
+                        except:
+                            pass
+                    
+                    st.markdown(f"""
+                    <div style='background: rgba(255,255,255,0.95); border-radius: 12px; padding: 16px; 
+                                margin-bottom: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);'>
+                        {foto_html}
+                        <div style='margin-top: 8px;'>
+                            <b style='color: #ff8800; font-size: 1.1em;'>{personagem}</b><br>
+                            <span style='color: #1a1a1a; font-size: 1em;'>{revelado}</span><br>
+                            <span style='color: #666; font-size: 0.9em;'>✓ {qtd_acertos} acerto{'s' if qtd_acertos != 1 else ''}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # === SEÇÃO 2: RANKING DE PARTICIPANTES ===
+        st.markdown("### 🏅 Leaderboard")
+        
+        # Calcula resultados
         resultados = []
-
         for apostador, palpites in apostas.items():
             pontos = 0
             acertados = []
@@ -580,48 +628,72 @@ elif menu == "Ranking":
             resultados.append((apostador, pontos, acertados))
 
         resultados = sorted(resultados, key=lambda x: x[1], reverse=True)
-
-        st.subheader("📈 Placares")
         
-        # Verifica se hoje é 14/12 para revelar nomes reais independente das revelações
+        # Verifica se hoje é 14/12 para revelar nomes reais
         hoje = datetime.now()
         dia_revelacao = (hoje.day == 4 and hoje.month == 12)
         
+        # Renderiza leaderboard estilizado
         for i, (player, score, acertados) in enumerate(resultados, 1):
-            medalha = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"
             nome_real_vinculado = vinculos.get(player)
             
             if dia_revelacao and nome_real_vinculado:
-                # No dia 14/12, mostra o nome real se o vínculo existir
                 exibicao = nome_real_vinculado
             else:
-                # Fora do dia, revela o nome real somente se o personagem dessa pessoa já tiver sido revelado
                 nomes_revelados = set(v for v in revelacoes.values() if v != "Ainda não revelado")
                 pode_revelar_nome = nome_real_vinculado in nomes_revelados if nome_real_vinculado else False
                 exibicao = nome_real_vinculado if pode_revelar_nome else player
             
-            st.write(f"{medalha} *{exibicao}* — {score} pontos")
-
-            if acertados:
-                st.write("**Personagens acertados:**")
-                for p in acertados:
-                    st.write(f"- {p}")
-                    # tenta exibir foto associada ao personagem (se houver)
-                    foto = None
-                    if isinstance(identidades, dict):
-                        data = identidades.get(p, {})
-                        foto = data.get("foto") if isinstance(data, dict) else None
-                    if foto:
-                        try:
-                            html = _rounded_image_html(foto, width=120)
-                            if html:
-                                st.markdown(html, unsafe_allow_html=True)
-                            else:
-                                st.write("(Imagem não encontrada)")
-                        except Exception:
-                            st.write("(Imagem não encontrada)")
+            # Define medalha e cor
+            if i == 1:
+                medalha = "🥇"
+                cor_fundo = "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)"
+                cor_texto = "#1a1a1a"
+            elif i == 2:
+                medalha = "🥈"
+                cor_fundo = "linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)"
+                cor_texto = "#1a1a1a"
+            elif i == 3:
+                medalha = "🥉"
+                cor_fundo = "linear-gradient(135deg, #CD7F32 0%, #B8860B 100%)"
+                cor_texto = "#fff"
             else:
-                st.write("_Nenhum acerto ainda_")
-
-        st.write("---")
-        st.caption("Ranking atual baseado nas revelações divulgadas.")
+                medalha = f"{i}"
+                cor_fundo = "rgba(255,255,255,0.9)"
+                cor_texto = "#1a1a1a"
+            
+            # Calcula estrelas (de 5, baseado na pontuação)
+            total_revelacoes = len([v for v in revelacoes.values() if v != "Ainda não revelado"])
+            if total_revelacoes > 0:
+                estrelas_cheias = int((score / total_revelacoes) * 5)
+                estrelas = "⭐" * estrelas_cheias + "☆" * (5 - estrelas_cheias)
+            else:
+                estrelas = "☆☆☆☆☆"
+            
+            st.markdown(f"""
+            <div style='background: {cor_fundo}; border-radius: 12px; padding: 16px; 
+                        margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        display: flex; align-items: center; justify-content: space-between;'>
+                <div style='display: flex; align-items: center; gap: 16px;'>
+                    <div style='width: 50px; height: 50px; border-radius: 50%; 
+                                background: rgba(0,0,0,0.1); display: flex; 
+                                align-items: center; justify-content: center;
+                                font-size: 1.5em; font-weight: bold; color: {cor_texto};'>
+                        {medalha}
+                    </div>
+                    <div>
+                        <div style='font-size: 1.2em; font-weight: bold; color: {cor_texto};'>
+                            {exibicao[:20]}
+                        </div>
+                        <div style='font-size: 0.9em; color: {cor_texto}; opacity: 0.8;'>
+                            {estrelas}
+                        </div>
+                    </div>
+                </div>
+                <div style='font-size: 1.5em; font-weight: bold; color: {cor_texto};'>
+                    {score}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.caption("🎯 Ranking atualizado em tempo real")
