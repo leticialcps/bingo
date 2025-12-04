@@ -618,8 +618,6 @@ elif menu == "Ranking":
                     </div>
                     """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        
         # === SEÇÃO 2: RANKING DE PARTICIPANTES ===
         st.markdown("### 🏅 Ranking")
         
