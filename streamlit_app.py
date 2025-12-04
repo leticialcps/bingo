@@ -393,13 +393,22 @@ if menu == "Fazer Aposta":
                             except Exception:
                                 pass
 
-                        options = ["Faça sua aposta"] + nomes_reais
+                        # Nomes disponíveis = todos exceto os já escolhidos
                         default = saved.get(p) if p in saved else None
-                        if default in nomes_reais:
-                            # opções tem o nome real deslocado em 1 por causa da label inicial
+                        
+                        # Se já tinha uma escolha salva, adiciona aos escolhidos
+                        if default and default in nomes_reais:
+                            nomes_ja_escolhidos.add(default)
+                        
+                        # Monta lista de opções disponíveis
+                        nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_escolhidos or n == default]
+                        options = ["Faça sua aposta"] + nomes_disponiveis
+                        
+                        if default in nomes_reais and default in options:
                             idx = options.index(default)
                         else:
                             idx = 0
+                            
                         sel = st.selectbox(
                             f"Quem é {p}?",
                             options,
@@ -407,8 +416,13 @@ if menu == "Fazer Aposta":
                             key=f"ap_{user_id}_{p}",
                             label_visibility="collapsed"
                         )
-                        # não salvar a label de instrução como aposta
-                        aposta_temp[p] = "" if sel == "Faça sua aposta" else sel
+                        
+                        # Atualiza os escolhidos
+                        if sel != "Faça sua aposta":
+                            nomes_ja_escolhidos.add(sel)
+                            aposta_temp[p] = sel
+                        else:
+                            aposta_temp[p] = ""
                     else:
                         st.write("")
 
@@ -454,6 +468,10 @@ elif menu == "Revelar Identidades":
         st.success("Acesso liberado!")
 
         st.write("Selecione as revelações oficiais:")
+        
+        # Rastreia quais nomes já foram revelados
+        nomes_ja_revelados = set()
+        
         # monta cartela 3x5 para revelações
         grid = make_bingo_grid(personagens, cols=3, rows=5)
         for row in grid:
@@ -486,13 +504,27 @@ elif menu == "Revelar Identidades":
                             except Exception:
                                 pass
 
-                        options = ["Ainda não revelado"] + nomes_reais
                         current = revelacoes.get(p, "Ainda não revelado")
+                        
+                        # Se já tinha uma revelação, adiciona aos revelados
+                        if current != "Ainda não revelado" and current in nomes_reais:
+                            nomes_ja_revelados.add(current)
+                        
+                        # Nomes disponíveis = todos exceto os já revelados
+                        nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_revelados or n == current]
+                        options = ["Ainda não revelado"] + nomes_disponiveis
+                        
                         try:
                             idx = options.index(current)
                         except ValueError:
                             idx = 0
+                            
                         sel = st.selectbox("Quem é?", options, index=idx, key=f"rev_{p}", label_visibility="collapsed")
+                        
+                        # Atualiza os revelados
+                        if sel != "Ainda não revelado":
+                            nomes_ja_revelados.add(sel)
+                        
                         revelacoes[p] = sel
                     else:
                         st.write("")
