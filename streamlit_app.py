@@ -330,7 +330,14 @@ if menu == "Fazer Aposta":
             st.stop()
 
     if user_id:
-        st.info(f"Você está apostando como: *{user_id}*")
+        # Verifica se já existem apostas para este ID
+        apostas_existentes = apostas.get(user_id, {}) if isinstance(apostas, dict) else {}
+        if apostas_existentes:
+            qtd_apostas = sum(1 for v in apostas_existentes.values() if v and v != "")
+            st.success(f"✓ Apostas encontradas! Você já tem {qtd_apostas} aposta(s) salva(s) com este código.")
+            st.info("Você pode revisar e alterar suas apostas abaixo.")
+        else:
+            st.info(f"Você está apostando como: *{user_id}*")
 
         # Vínculo do código ao nome real disponível apenas no dia 14/12
         hoje = datetime.now()
@@ -436,6 +443,26 @@ if menu == "Fazer Aposta":
                 apostas[user_id] = aposta_temp
                 save_json("apostas.json", apostas)
                 st.success("Apostas registradas com sucesso!")
+                
+                # Mostra resumo das apostas para backup
+                st.markdown("---")
+                st.markdown("### 📋 Resumo das suas apostas")
+                st.info("💾 Salve este resumo como backup!")
+                
+                resumo_texto = f"**ID:** {user_id}\n\n**Apostas:**\n"
+                for personagem, nome in aposta_temp.items():
+                    if nome:
+                        resumo_texto += f"• {personagem} → {nome}\n"
+                
+                st.markdown(resumo_texto)
+                
+                # Campo copiável
+                apostas_formatadas = "\n".join([f"{p}: {n}" for p, n in aposta_temp.items() if n])
+                st.text_area(
+                    "Copie este texto para guardar como backup:",
+                    value=f"ID: {user_id}\n\n{apostas_formatadas}",
+                    height=200
+                )
 
 # -----------------------------------------------
 # Página - Revelação (Admin)
