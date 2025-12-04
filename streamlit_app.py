@@ -81,12 +81,14 @@ def carregar_todos_dados():
 # Carrega todos os dados
 dados = carregar_todos_dados()
 participantes = dados["participantes"]
-personagens = participantes.get("personagens", [])
 nomes_reais = participantes.get("nomes_reais", [])
+
+# Pega lista de personagens da aba identidades
+identidades = dados["identidades"]
+personagens = list(identidades.keys()) if isinstance(identidades, dict) else []
 
 apostas = dados["apostas"]
 revelacoes = dados["revelacoes"]
-identidades = dados["identidades"]
 vinculos = dados["vinculos"]
 
 st.set_page_config(page_title="Amigo Secreto Swifities Idosos!", layout="centered")
