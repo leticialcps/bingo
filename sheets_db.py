@@ -106,11 +106,11 @@ def load_sheet_data(sheet_name):
         # Detecta o formato da planilha
         headers = all_values[0] if all_values else []
         
-        # Formato especial para apostas: ID | Personagem | Pessoa
+        # Formato apostas: ID | Personagem | Pessoa
         if sheet_name == "apostas" and len(headers) >= 3 and headers[0].upper() == 'ID':
             result = {}
             for row in all_values[1:]:
-                if len(row) >= 3 and row[0] and row[1]:  # ID e Personagem obrigatórios
+                if len(row) >= 3 and row[0] and row[1]:
                     user_id = row[0]
                     personagem = row[1]
                     pessoa = row[2] if len(row) > 2 else ''
@@ -118,6 +118,39 @@ def load_sheet_data(sheet_name):
                     if user_id not in result:
                         result[user_id] = {}
                     result[user_id][personagem] = pessoa
+            return result
+        
+        # Formato codigos_identidade: ID | Responsável
+        elif sheet_name == "codigos_identidade" and len(headers) >= 2 and headers[0].upper() == 'ID':
+            result = {}
+            for row in all_values[1:]:
+                if len(row) >= 2 and row[0]:
+                    user_id = row[0]
+                    responsavel = row[1] if len(row) > 1 else ''
+                    if responsavel:
+                        result[user_id] = responsavel
+            return result
+        
+        # Formato identidades: Personagem | Nome Real | URL da Foto
+        elif sheet_name == "identidades" and len(headers) >= 2 and headers[0].lower() in ['personagem']:
+            result = {}
+            for row in all_values[1:]:
+                if len(row) >= 1 and row[0]:
+                    personagem = row[0]
+                    result[personagem] = {
+                        "nome": row[1] if len(row) > 1 else '',
+                        "foto": row[2] if len(row) > 2 else ''
+                    }
+            return result
+        
+        # Formato revelacoes: Personagem | Pessoa
+        elif sheet_name == "revelacoes" and len(headers) >= 2 and headers[0].lower() in ['personagem']:
+            result = {}
+            for row in all_values[1:]:
+                if len(row) >= 2 and row[0]:
+                    personagem = row[0]
+                    pessoa = row[1] if len(row) > 1 else 'Ainda não revelado'
+                    result[personagem] = pessoa
             return result
         
         # Formato key-value (usado pelo nosso sistema)
@@ -166,8 +199,12 @@ def save_sheet_data(sheet_name, data):
     Salva dados em uma aba específica da planilha.
     data deve ser um dicionário (equivalente ao JSON).
     
-    Para apostas: se data contém entradas como {user_id: {personagem: pessoa}},
-    salva em formato tabular com colunas ID, Personagem, Pessoa.
+    Formatos suportados:
+    - apostas: {user_id: {personagem: pessoa}} -> ID | Personagem | Pessoa
+    - codigos_identidade: {user_id: responsavel} -> ID | Responsável
+    - identidades: {personagem: {nome, foto}} -> Personagem | Nome Real | URL da Foto
+    - revelacoes: {personagem: pessoa} -> Personagem | Pessoa
+    - participantes: {personagens: [], nomes_reais: []} -> formato colunar
     """
     spreadsheet = get_spreadsheet()
     if spreadsheet is None:
@@ -184,34 +221,71 @@ def save_sheet_data(sheet_name, data):
         # Limpa a aba
         worksheet.clear()
         
-        # Formato especial para apostas: ID | Personagem | Pessoa
+        # Formato apostas: ID | Personagem | Pessoa
         if sheet_name == "apostas" and isinstance(data, dict):
-            rows = [['ID', 'Personagem', 'Pessoa']]  # Headers
+            rows = [['ID', 'Personagem', 'Pessoa']]
             for user_id, palpites in data.items():
                 if isinstance(palpites, dict):
                     for personagem, pessoa in palpites.items():
-                        if pessoa:  # Só salva se tiver uma pessoa escolhida
+                        if pessoa:
                             rows.append([str(user_id), str(personagem), str(pessoa)])
             
-            # Escreve todos os dados
-            if len(rows) > 1:  # Se tem dados além do header
+            if len(rows) > 1:
                 worksheet.update(f'A1:C{len(rows)}', rows)
             else:
-                worksheet.update('A1:C1', rows)  # Só o header
+                worksheet.update('A1:C1', rows)
+            return True
+        
+        # Formato codigos_identidade: ID | Responsável
+        elif sheet_name == "codigos_identidade" and isinstance(data, dict):
+            rows = [['ID', 'Responsável']]
+            for user_id, responsavel in data.items():
+                if responsavel:
+                    rows.append([str(user_id), str(responsavel)])
+            
+            if len(rows) > 1:
+                worksheet.update(f'A1:B{len(rows)}', rows)
+            else:
+                worksheet.update('A1:B1', rows)
+            return True
+        
+        # Formato identidades: Personagem | Nome Real | URL da Foto
+        elif sheet_name == "identidades" and isinstance(data, dict):
+            rows = [['Personagem', 'Nome Real', 'URL da Foto']]
+            for personagem, info in data.items():
+                if isinstance(info, dict):
+                    nome = info.get('nome', '')
+                    foto = info.get('foto', '')
+                    rows.append([str(personagem), str(nome), str(foto)])
+            
+            if len(rows) > 1:
+                worksheet.update(f'A1:C{len(rows)}', rows)
+            else:
+                worksheet.update('A1:C1', rows)
+            return True
+        
+        # Formato revelacoes: Personagem | Pessoa
+        elif sheet_name == "revelacoes" and isinstance(data, dict):
+            rows = [['Personagem', 'Pessoa']]
+            for personagem, pessoa in data.items():
+                rows.append([str(personagem), str(pessoa)])
+            
+            if len(rows) > 1:
+                worksheet.update(f'A1:B{len(rows)}', rows)
+            else:
+                worksheet.update('A1:B1', rows)
             return True
         
         # Formato key-value padrão para outros casos
         else:
-            rows = [['key', 'value']]  # Header
+            rows = [['key', 'value']]
             for key, value in data.items():
-                # Converte valores complexos para JSON string
                 if isinstance(value, (dict, list)):
                     value_str = json.dumps(value, ensure_ascii=False)
                 else:
                     value_str = str(value)
                 rows.append([str(key), value_str])
             
-            # Escreve todos os dados de uma vez
             worksheet.update(f'A1:B{len(rows)}', rows)
             return True
     except Exception:
