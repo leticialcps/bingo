@@ -563,12 +563,12 @@ elif menu == "Ranking":
         </style>
         ''', unsafe_allow_html=True)
 
-    st.header("🏆 Ranking")
-    
     # Botão para recarregar dados
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.header("Ranking")
     with col2:
-        if st.button("🔄 Atualizar Ranking", use_container_width=True):
+        if st.button("🔄 Atualizar", use_container_width=True):
             carregar_todos_dados.clear()
             st.rerun()
 
@@ -621,7 +621,7 @@ elif menu == "Ranking":
         st.markdown("---")
         
         # === SEÇÃO 2: RANKING DE PARTICIPANTES ===
-        st.markdown("### 🏅 Leaderboard")
+        st.markdown("### 🏅 Ranking")
         
         # Calcula resultados
         resultados = []
