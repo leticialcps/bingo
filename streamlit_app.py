@@ -485,6 +485,9 @@ elif menu == "Revelar Identidades":
         
         # monta cartela 3x5 para revelações
         grid = make_bingo_grid(personagens, cols=3, rows=5)
+        for row in grid:
+            cols = st.columns(3)
+            for col, p in zip(cols, row):
                 with col:
                     if p:
                         # Container padronizado para cada personagem
