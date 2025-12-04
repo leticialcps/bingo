@@ -360,6 +360,13 @@ if menu == "Fazer Aposta":
         saved = apostas.get(user_id, {}) if isinstance(apostas, dict) else {}
 
         st.write("Preencha a possível identidade de cada personagem:")
+        
+        # Rastreia quais nomes já foram escolhidos - preenche com as escolhas salvas primeiro
+        nomes_ja_escolhidos = set()
+        for personagem in personagens:
+            escolha_salva = saved.get(personagem)
+            if escolha_salva and escolha_salva in nomes_reais:
+                nomes_ja_escolhidos.add(escolha_salva)
 
         # monta cartela 3x5
         grid = make_bingo_grid(personagens, cols=3, rows=5)
@@ -393,12 +400,8 @@ if menu == "Fazer Aposta":
                             except Exception:
                                 pass
 
-                        # Nomes disponíveis = todos exceto os já escolhidos
+                        # Nomes disponíveis = todos exceto os já escolhidos (mas mantém o default)
                         default = saved.get(p) if p in saved else None
-                        
-                        # Se já tinha uma escolha salva, adiciona aos escolhidos
-                        if default and default in nomes_reais:
-                            nomes_ja_escolhidos.add(default)
                         
                         # Monta lista de opções disponíveis
                         nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_escolhidos or n == default]
@@ -417,7 +420,8 @@ if menu == "Fazer Aposta":
                             label_visibility="collapsed"
                         )
                         
-                        # Atualiza os escolhidos
+                        # Salva a escolha
+                        aposta_temp[p] = "" if sel == "Faça sua aposta" else sel
                         if sel != "Faça sua aposta":
                             nomes_ja_escolhidos.add(sel)
                             aposta_temp[p] = sel
@@ -470,13 +474,17 @@ elif menu == "Revelar Identidades":
         st.write("Selecione as revelações oficiais:")
         
         # Rastreia quais nomes já foram revelados
+        st.write("Selecione as revelações oficiais:")
+        
+        # Rastreia quais nomes já foram revelados - preenche primeiro com revelações existentes
         nomes_ja_revelados = set()
+        for personagem in personagens:
+            revelacao_existente = revelacoes.get(personagem, "Ainda não revelado")
+            if revelacao_existente != "Ainda não revelado" and revelacao_existente in nomes_reais:
+                nomes_ja_revelados.add(revelacao_existente)
         
         # monta cartela 3x5 para revelações
         grid = make_bingo_grid(personagens, cols=3, rows=5)
-        for row in grid:
-            cols = st.columns(3)
-            for col, p in zip(cols, row):
                 with col:
                     if p:
                         # Container padronizado para cada personagem
@@ -506,11 +514,7 @@ elif menu == "Revelar Identidades":
 
                         current = revelacoes.get(p, "Ainda não revelado")
                         
-                        # Se já tinha uma revelação, adiciona aos revelados
-                        if current != "Ainda não revelado" and current in nomes_reais:
-                            nomes_ja_revelados.add(current)
-                        
-                        # Nomes disponíveis = todos exceto os já revelados
+                        # Nomes disponíveis = todos exceto os já revelados (mas mantém o current)
                         nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_revelados or n == current]
                         options = ["Ainda não revelado"] + nomes_disponiveis
                         
@@ -520,10 +524,6 @@ elif menu == "Revelar Identidades":
                             idx = 0
                             
                         sel = st.selectbox("Quem é?", options, index=idx, key=f"rev_{p}", label_visibility="collapsed")
-                        
-                        # Atualiza os revelados
-                        if sel != "Ainda não revelado":
-                            nomes_ja_revelados.add(sel)
                         
                         revelacoes[p] = sel
                     else:
