@@ -11,14 +11,18 @@ from sheets_db import load_sheet_data, save_sheet_data
 # Funções utilitárias
 # -----------------------------------------------
 def load_json(path):
-    """Carrega dados - primeiro tenta Google Sheets, depois fallback para JSON local."""
+    """Carrega dados do Google Sheets (com fallback para JSON local)."""
     sheet_name = path.replace('.json', '')
-    return load_sheet_data(sheet_name)
+    data = load_sheet_data(sheet_name)
+    # Se retornar vazio, garante estrutura mínima
+    if not data:
+        return {}
+    return data
 
 def save_json(path, data):
-    """Salva dados - primeiro tenta Google Sheets, depois fallback para JSON local."""
+    """Salva dados no Google Sheets (com fallback para JSON local)."""
     sheet_name = path.replace('.json', '')
-    save_sheet_data(sheet_name, data)
+    return save_sheet_data(sheet_name, data)
 
 
 def _rounded_image_html(path, width=120):
@@ -59,8 +63,8 @@ def make_bingo_grid(items, cols=3, rows=5):
     return grid
 
 participantes = load_json("participantes.json")
-personagens = participantes["personagens"]
-nomes_reais = participantes["nomes_reais"]
+personagens = participantes.get("personagens", [])
+nomes_reais = participantes.get("nomes_reais", [])
 
 apostas = load_json("apostas.json")
 revelacoes = load_json("revelacoes.json")

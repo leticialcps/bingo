@@ -61,6 +61,7 @@ def load_sheet_data(sheet_name):
     """
     Carrega dados de uma aba específica da planilha.
     Retorna um dicionário (equivalente ao JSON).
+    Se a aba estiver vazia, sincroniza com dados do JSON local.
     """
     spreadsheet = get_spreadsheet()
     if spreadsheet is None:
@@ -75,10 +76,24 @@ def load_sheet_data(sheet_name):
             worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=20)
             # Inicializa com headers
             worksheet.update('A1:B1', [['key', 'value']])
+            
+            # Tenta sincronizar com JSON local na primeira execução
+            local_data = load_json_fallback(f"{sheet_name}.json")
+            if local_data:
+                save_sheet_data(sheet_name, local_data)
+                return local_data
             return {}
         
         # Lê todos os dados da aba
         records = worksheet.get_all_records()
+        
+        # Se a planilha estiver vazia (só headers), sincroniza com JSON local
+        if not records or len(records) == 0:
+            local_data = load_json_fallback(f"{sheet_name}.json")
+            if local_data:
+                save_sheet_data(sheet_name, local_data)
+                return local_data
+            return {}
         
         # Converte para dicionário
         result = {}
