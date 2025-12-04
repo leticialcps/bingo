@@ -227,11 +227,33 @@ st.markdown(
         background: rgba(255, 136, 0, 0.2) !important;
         box-shadow: 0 2px 8px rgba(255, 136, 0, 0.3) !important;
     }
+    /* Sidebar - garantir que fique visível e legível */
+    section[data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        z-index: 999 !important;
+    }
+    section[data-testid="stSidebar"] .stRadio > label {
+        color: #1a1a1a !important;
+        font-weight: bold !important;
+        font-size: 1.1em !important;
+    }
+    section[data-testid="stSidebar"] [role="radiogroup"] label {
+        color: #1a1a1a !important;
+        font-size: 1.05em !important;
+    }
     </style>
     ''', unsafe_allow_html=True)
 
 st.title("Bingo Amigo Secreto Swifities Idosos")
 
+# Verifica se Google Sheets está configurado
+try:
+    _ = st.secrets["gcp_service_account"]
+    sheets_ativo = True
+except:
+    sheets_ativo = False
+    with st.sidebar:
+        st.info("💡 Usando arquivos locais. Para dados persistentes, configure Google Sheets.")
 
 menu = st.sidebar.radio("Menu", ["Fazer Aposta", "Revelar Identidades", "Ranking"])
 
@@ -275,7 +297,7 @@ if menu == "Fazer Aposta":
 
         # Vínculo do código ao nome real disponível apenas no dia 14/12
         hoje = datetime.now()
-        pode_vincular = (hoje.day == 1 and hoje.month == 12)
+        pode_vincular = (hoje.day == 4 and hoje.month == 12)
         if pode_vincular:
             st.markdown("""
             <div style='background: rgba(255,255,255,0.9); border-radius: 12px; padding: 16px; margin: 8px 0;'>
@@ -491,7 +513,7 @@ elif menu == "Ranking":
         
         # Verifica se hoje é 14/12 para revelar nomes reais independente das revelações
         hoje = datetime.now()
-        dia_revelacao = (hoje.day == 1 and hoje.month == 12)
+        dia_revelacao = (hoje.day == 4 and hoje.month == 12)
         
         for i, (player, score, acertados) in enumerate(resultados, 1):
             medalha = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "🔹"

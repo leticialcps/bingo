@@ -27,9 +27,11 @@ def get_google_sheets_client():
             scopes=SCOPES
         )
         return gspread.authorize(credentials)
+    except KeyError:
+        # Secrets não configurados - modo silencioso
+        return None
     except Exception as e:
-        st.error(f"Erro ao conectar com Google Sheets: {e}")
-        st.info("Usando arquivos JSON locais como fallback.")
+        # Outros erros - modo silencioso também
         return None
 
 def get_spreadsheet():
@@ -53,8 +55,8 @@ def get_spreadsheet():
             st.success(f"Nova planilha criada: {sheet_name}")
         
         return spreadsheet
-    except Exception as e:
-        st.error(f"Erro ao acessar planilha: {e}")
+    except Exception:
+        # Erro silencioso - usa fallback JSON
         return None
 
 def load_sheet_data(sheet_name):
@@ -93,8 +95,8 @@ def load_sheet_data(sheet_name):
                     result[key] = value_str
         
         return result
-    except Exception as e:
-        st.error(f"Erro ao ler dados da planilha {sheet_name}: {e}")
+    except Exception:
+        # Erro silencioso - usa fallback JSON
         return load_json_fallback(f"{sheet_name}.json")
 
 def save_sheet_data(sheet_name, data):
@@ -130,8 +132,8 @@ def save_sheet_data(sheet_name, data):
         # Escreve todos os dados de uma vez
         worksheet.update(f'A1:B{len(rows)}', rows)
         return True
-    except Exception as e:
-        st.error(f"Erro ao salvar dados na planilha {sheet_name}: {e}")
+    except Exception:
+        # Erro silencioso - usa fallback JSON
         return save_json_fallback(f"{sheet_name}.json", data)
 
 # Funções de fallback para JSON local (caso Google Sheets não esteja disponível)
