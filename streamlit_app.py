@@ -432,6 +432,16 @@ if menu == "Fazer Aposta":
         saved = apostas.get(user_id, {}) if isinstance(apostas, dict) else {}
 
         st.write("Preencha a possível identidade de cada personagem:")
+        
+        # Primeiro passa: coleta todas as escolhas atuais dos widgets
+        escolhas_atuais = {}
+        for p in personagens:
+            widget_key = f"ap_{user_id}_{p}"
+            # Tenta pegar do session_state se já existe
+            if widget_key in st.session_state:
+                val = st.session_state[widget_key]
+                if val != "Faça sua aposta":
+                    escolhas_atuais[p] = val
 
         # monta cartela 3x5
         grid = make_bingo_grid(personagens, cols=3, rows=5)
@@ -467,10 +477,10 @@ if menu == "Fazer Aposta":
 
                         default = saved.get(p) if p in saved else None
                         
-                        # Coleta nomes já escolhidos em aposta_temp EXCETO o atual
+                        # Coleta nomes já escolhidos EXCETO o atual
                         nomes_ja_escolhidos = set()
-                        for outro_personagem, nome_escolhido in aposta_temp.items():
-                            if outro_personagem != p and nome_escolhido and nome_escolhido != "":
+                        for outro_p, nome_escolhido in escolhas_atuais.items():
+                            if outro_p != p and nome_escolhido:
                                 nomes_ja_escolhidos.add(nome_escolhido)
                         
                         # Monta lista de opções disponíveis (exclui já escolhidos em outros)
