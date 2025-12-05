@@ -449,16 +449,16 @@ if menu == "Fazer Aposta":
                 st.success("Apostas registradas com sucesso!")
                 
                 # Mostra resumo das apostas para backup
-                st.markdown("---")
-                st.markdown("### 📋 Resumo das suas apostas")
-                st.info("💾 Salve este resumo como backup!")
+                # st.markdown("---")
+                # st.markdown("### 📋 Resumo das suas apostas")
+                # st.info("💾 Salve este resumo como backup!")
                 
-                resumo_texto = f"**ID:** {user_id}\n\n**Apostas:**\n"
-                for personagem, nome in aposta_temp.items():
-                    if nome:
-                        resumo_texto += f"• {personagem} → {nome}\n"
+                # resumo_texto = f"**ID:** {user_id}\n\n**Apostas:**\n"
+                # for personagem, nome in aposta_temp.items():
+                #     if nome:
+                #         resumo_texto += f"• {personagem} → {nome}\n"
                 
-                st.markdown(resumo_texto)
+                # st.markdown(resumo_texto)
                 
                 # Campo copiável
                 apostas_formatadas = "\n".join([f"{p}: {n}" for p, n in aposta_temp.items() if n])
