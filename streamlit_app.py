@@ -334,6 +334,12 @@ if menu == "Fazer Aposta":
             qtd_apostas = sum(1 for v in apostas_existentes.values() if v and v != "")
             st.success(f"✓ Apostas encontradas! Você já tem {qtd_apostas} aposta(s) salva(s) com este código.")
             st.info("Você pode revisar e alterar suas apostas abaixo.")
+            
+            # Mostra resumo das apostas existentes
+            with st.expander("📋 Ver minhas apostas salvas"):
+                for personagem, nome in apostas_existentes.items():
+                    if nome:
+                        st.write(f"• **{personagem}** → {nome}")
         else:
             st.info(f"Você está apostando como: *{user_id}*")
 
