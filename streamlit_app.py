@@ -491,7 +491,10 @@ if menu == "Fazer Aposta":
                         )
                         
                         # Salva a escolha em aposta_temp
-                        aposta_temp[p] = "" if sel == "Faça sua aposta" else sel
+                        if sel != "Faça sua aposta":
+                            aposta_temp[p] = sel
+                        else:
+                            aposta_temp[p] = ""
                     else:
                         st.write("")
 
