@@ -384,7 +384,28 @@ if menu == "Fazer Aposta":
         vinculo_obrigatorio = dia_14 and apos_17h
         vinculo_disponivel = dia_14
         
-        if vinculo_disponivel:
+        # Se for antes do dia 14/12, pede senha para vincular
+        acesso_vinculo = vinculo_disponivel
+        
+        if not vinculo_disponivel:
+            st.markdown("""
+            <div style='background: rgba(255,255,255,0.9); border-radius: 12px; padding: 16px; margin: 8px 0;'>
+                <b style='color:#ff8800'>🔒 Vincular código ao nome real (requer senha de admin)</b>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                senha_vinculo = st.text_input("Senha de admin:", type="password", key="senha_vinculo")
+            
+            if senha_vinculo == "taylorswift13":
+                acesso_vinculo = True
+                st.success("Acesso liberado para vincular nome!")
+            else:
+                if senha_vinculo:
+                    st.warning("Senha incorreta.")
+        
+        if acesso_vinculo:
             mensagem = "⚠️ OBRIGATÓRIO: Vincule seu código ao nome real" if vinculo_obrigatorio else "Vincular código ao seu nome real (disponível hoje)"
             st.markdown(f"""
             <div style='background: rgba(255,255,255,0.9); border-radius: 12px; padding: 16px; margin: 8px 0;'>
