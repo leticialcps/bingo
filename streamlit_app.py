@@ -280,21 +280,19 @@ except:
         st.info("💡 Usando arquivos locais. Para dados persistentes, configure Google Sheets.")
 
 # Menu de debug (só aparece se Sheets estiver ativo)
-if sheets_ativo:
-    with st.sidebar:
-        with st.expander("🔍 Debug - Estrutura das Planilhas"):
-            if st.button("Ver estrutura de 'participantes'"):
-                info = preview_sheet_structure("participantes")
-                if info:
-                    st.json(info)
-            
-            if st.button("Recarregar dados do Google Sheets"):
-                st.cache_resource.clear()
-                st.rerun()
+# if sheets_ativo:
+#     with st.sidebar:
+#         with st.expander("🔍 Debug - Estrutura das Planilhas"):
+#             if st.button("Ver estrutura de 'participantes'"):
+#                 info = preview_sheet_structure("participantes")
+#                 if info:
+#                     st.json(info)
+#             
+#             if st.button("Recarregar dados do Google Sheets"):
+#                 st.cache_resource.clear()
+#                 st.rerun()
 
-menu = st.sidebar.radio("Menu", ["Fazer Aposta", "Revelar Identidades", "Ranking"])
-
-# Detecta se está na tela inicial
+menu = st.sidebar.radio("Menu", ["Fazer Aposta", "Revelar Identidades", "Ranking"])# Detecta se está na tela inicial
 if menu == "Fazer Aposta":
     st.markdown(
         '''
