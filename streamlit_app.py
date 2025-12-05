@@ -399,8 +399,7 @@ if menu == "Fazer Aposta":
                 "Seu nome real:", opcoes_nomes, index=idx_nome, key=f"vinc_{user_id}")
             
             if vinculo_obrigatorio and nome_escolhido == "Selecione seu nome real":
-                st.error("⚠️ Você DEVE vincular seu código ao nome real para continuar.")
-                st.stop()
+                st.error("⚠️ Você DEVE vincular seu código ao nome real.")
             
             if st.button("Salvar vínculo", use_container_width=True, key=f"btn_vinc_{user_id}"):
                 if nome_escolhido == "Selecione seu nome real":
@@ -409,6 +408,24 @@ if menu == "Fazer Aposta":
                     vinculos[user_id] = nome_escolhido
                     save_json("codigos_identidade.json", vinculos)
                     st.success(f"Código vinculado ao nome real: {nome_escolhido}")
+        
+        # Se for após 17h do dia 14/12, apenas mostra backup e não permite apostas
+        if vinculo_obrigatorio:
+            st.markdown("---")
+            st.info("⏰ Apostas encerradas! Veja abaixo suas apostas já realizadas:")
+            
+            # Mostra backup das apostas
+            saved = apostas.get(user_id, {}) if isinstance(apostas, dict) else {}
+            if saved:
+                apostas_formatadas = "\n".join([f"{p}: {n}" for p, n in saved.items() if n])
+                st.text_area(
+                    "Suas apostas (copie para guardar):",
+                    value=f"ID: {user_id}\n\n{apostas_formatadas}",
+                    height=200
+                )
+            else:
+                st.warning("Você não fez nenhuma aposta.")
+            st.stop()
 
         # Carrega apostas anteriores (se existirem) e pré-preenche os selectboxes
         aposta_temp = {}
