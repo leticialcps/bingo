@@ -516,13 +516,6 @@ elif menu == "Revelar Identidades":
     if acesso_liberado:
         st.write("Selecione as revelações oficiais:")
         
-        # Rastreia quais nomes já foram revelados - preenche primeiro com revelações existentes
-        nomes_ja_revelados = set()
-        for personagem in personagens:
-            revelacao_existente = revelacoes.get(personagem, "Ainda não revelado")
-            if revelacao_existente != "Ainda não revelado" and revelacao_existente in nomes_reais:
-                nomes_ja_revelados.add(revelacao_existente)
-        
         # monta cartela 3x5 para revelações
         grid = make_bingo_grid(personagens, cols=3, rows=5)
         for row in grid:
@@ -557,8 +550,14 @@ elif menu == "Revelar Identidades":
 
                         current = revelacoes.get(p, "Ainda não revelado")
                         
-                        # Nomes disponíveis = todos exceto os já revelados (mas mantém o current)
-                        nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_revelados or n == current]
+                        # Coleta nomes já revelados EXCETO o atual
+                        nomes_ja_revelados = set()
+                        for outro_personagem, nome_revelado in revelacoes.items():
+                            if outro_personagem != p and nome_revelado != "Ainda não revelado" and nome_revelado in nomes_reais:
+                                nomes_ja_revelados.add(nome_revelado)
+                        
+                        # Nomes disponíveis = todos exceto os já revelados em outros personagens
+                        nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_revelados]
                         options = ["Ainda não revelado"] + nomes_disponiveis
                         
                         try:
