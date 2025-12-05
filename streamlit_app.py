@@ -345,7 +345,7 @@ if menu == "Fazer Aposta":
 
         # Vínculo do código ao nome real disponível apenas no dia 14/12
         hoje = datetime.now()
-        pode_vincular = (hoje.day == 14 and hoje.month == 12)
+        pode_vincular = (hoje.day == 5 and hoje.month == 12)
         if pode_vincular:
             st.markdown("""
             <div style='background: rgba(255,255,255,0.9); border-radius: 12px; padding: 16px; margin: 8px 0;'>
@@ -497,7 +497,7 @@ elif menu == "Revelar Identidades":
     
     # Verifica se é dia 14/12
     hoje = datetime.now()
-    dia_revelacao = (hoje.day == 14 and hoje.month == 12)
+    dia_revelacao = (hoje.day == 5 and hoje.month == 12)
     
     # Solicita senha apenas se NÃO for dia 14/12
     acesso_liberado = dia_revelacao
@@ -676,7 +676,7 @@ elif menu == "Ranking":
         
         # Verifica se hoje é 14/12 para revelar nomes reais
         hoje = datetime.now()
-        dia_revelacao = (hoje.day == 14 and hoje.month == 12)
+        dia_revelacao = (hoje.day == 5 and hoje.month == 12)
         
         # Renderiza leaderboard estilizado
         for i, (player, score, acertados) in enumerate(resultados, 1):
