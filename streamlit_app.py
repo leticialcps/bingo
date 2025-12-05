@@ -607,7 +607,10 @@ elif menu == "Ranking":
     with col1:
         st.header("Ranking")
     with col2:
-        if st.button("🔄 Atualizar", use_container_width=True):
+        if st.button("🔄 Atualizar", use_container_width=True, key="btn_atualizar_ranking"):
+            # Limpa todos os caches
+            st.cache_data.clear()
+            st.cache_resource.clear()
             carregar_todos_dados.clear()
             st.rerun()
 
