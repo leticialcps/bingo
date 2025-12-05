@@ -317,6 +317,34 @@ if menu == "Fazer Aposta":
 if menu == "Fazer Aposta":
 
     st.header("✨Faça suas apostas:✨")
+    
+    # Verifica se é dia 14/12 às 17h ou depois (horário de Brasília UTC-3)
+    from datetime import timezone, timedelta
+    brasilia_tz = timezone(timedelta(hours=-3))
+    agora_brasilia = datetime.now(brasilia_tz)
+    
+    apostas_bloqueadas = (agora_brasilia.day == 14 and 
+                         agora_brasilia.month == 12 and 
+                         agora_brasilia.hour >= 17)
+    
+    # Se apostas bloqueadas, pede senha de admin
+    acesso_apostas = not apostas_bloqueadas
+    
+    if apostas_bloqueadas:
+        st.warning("⏰ Apostas encerradas! Hoje é 14/12 após 17h.")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            senha_apostas = st.text_input("Senha de admin para acessar:", type="password", key="senha_apostas")
+        
+        if senha_apostas == "taylorswift13":
+            acesso_apostas = True
+            st.success("Acesso administrativo liberado!")
+        else:
+            st.info("Apenas administradores podem fazer apostas após o encerramento.")
+    
+    if not acesso_apostas:
+        st.stop()
+    
     st.write("Você receberá um código anônimo para usar depois no ranking.")
 
     user_id = st.text_input("Digite seu código (ou deixe em branco para gerar)")
@@ -343,13 +371,24 @@ if menu == "Fazer Aposta":
         else:
             st.info(f"Você está apostando como: *{user_id}*")
 
-        # Vínculo do código ao nome real disponível apenas no dia 14/12
-        hoje = datetime.now()
-        pode_vincular = (hoje.day == 14 and hoje.month == 12)
-        if pode_vincular:
-            st.markdown("""
+        # Vínculo do código ao nome real
+        # Verifica se é dia 14/12 a partir das 17h (horário de Brasília UTC-3)
+        from datetime import timezone, timedelta
+        brasilia_tz = timezone(timedelta(hours=-3))
+        agora_brasilia = datetime.now(brasilia_tz)
+        
+        # Disponível o dia todo no dia 14/12, mas OBRIGATÓRIO a partir das 17h
+        dia_14 = (agora_brasilia.day == 14 and agora_brasilia.month == 12)
+        apos_17h = (agora_brasilia.hour >= 17)
+        
+        vinculo_obrigatorio = dia_14 and apos_17h
+        vinculo_disponivel = dia_14
+        
+        if vinculo_disponivel:
+            mensagem = "⚠️ OBRIGATÓRIO: Vincule seu código ao nome real" if vinculo_obrigatorio else "Vincular código ao seu nome real (disponível hoje)"
+            st.markdown(f"""
             <div style='background: rgba(255,255,255,0.9); border-radius: 12px; padding: 16px; margin: 8px 0;'>
-                <b style='color:#ff8800'>Vincular código ao seu nome real (disponível hoje)</b>
+                <b style='color:#ff8800'>{mensagem}</b>
             </div>
             """, unsafe_allow_html=True)
 
@@ -358,6 +397,11 @@ if menu == "Fazer Aposta":
             idx_nome = opcoes_nomes.index(atual) if atual in nomes_reais else 0
             nome_escolhido = st.selectbox(
                 "Seu nome real:", opcoes_nomes, index=idx_nome, key=f"vinc_{user_id}")
+            
+            if vinculo_obrigatorio and nome_escolhido == "Selecione seu nome real":
+                st.error("⚠️ Você DEVE vincular seu código ao nome real para continuar.")
+                st.stop()
+            
             if st.button("Salvar vínculo", use_container_width=True, key=f"btn_vinc_{user_id}"):
                 if nome_escolhido == "Selecione seu nome real":
                     st.warning("Selecione um nome válido para vincular.")
