@@ -433,15 +433,18 @@ if menu == "Fazer Aposta":
 
         st.write("Preencha a possível identidade de cada personagem:")
         
-        # Primeiro passa: coleta todas as escolhas atuais dos widgets
+        # Primeiro passa: coleta todas as escolhas atuais (combinando saved e session_state)
         escolhas_atuais = {}
         for p in personagens:
             widget_key = f"ap_{user_id}_{p}"
-            # Tenta pegar do session_state se já existe
+            # Primeiro tenta pegar do session_state (mais recente)
             if widget_key in st.session_state:
                 val = st.session_state[widget_key]
                 if val != "Faça sua aposta":
                     escolhas_atuais[p] = val
+            # Se não tem no session_state, usa o saved
+            elif p in saved and saved[p]:
+                escolhas_atuais[p] = saved[p]
 
         # monta cartela 3x5
         grid = make_bingo_grid(personagens, cols=3, rows=5)
@@ -475,7 +478,8 @@ if menu == "Fazer Aposta":
                             except Exception:
                                 pass
 
-                        default = saved.get(p) if p in saved else None
+                        # Pega a escolha atual deste personagem
+                        escolha_atual = escolhas_atuais.get(p)
                         
                         # Coleta nomes já escolhidos EXCETO o atual
                         nomes_ja_escolhidos = set()
@@ -487,8 +491,9 @@ if menu == "Fazer Aposta":
                         nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_escolhidos]
                         options = ["Faça sua aposta"] + nomes_disponiveis
                         
-                        if default in nomes_reais and default in options:
-                            idx = options.index(default)
+                        # Verifica se a escolha atual ainda está disponível
+                        if escolha_atual and escolha_atual in options:
+                            idx = options.index(escolha_atual)
                         else:
                             idx = 0
                             
