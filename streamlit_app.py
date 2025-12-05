@@ -371,13 +371,6 @@ if menu == "Fazer Aposta":
         saved = apostas.get(user_id, {}) if isinstance(apostas, dict) else {}
 
         st.write("Preencha a possível identidade de cada personagem:")
-        
-        # Rastreia quais nomes já foram escolhidos - preenche com as escolhas salvas primeiro
-        nomes_ja_escolhidos = set()
-        for personagem in personagens:
-            escolha_salva = saved.get(personagem)
-            if escolha_salva and escolha_salva in nomes_reais:
-                nomes_ja_escolhidos.add(escolha_salva)
 
         # monta cartela 3x5
         grid = make_bingo_grid(personagens, cols=3, rows=5)
@@ -411,11 +404,16 @@ if menu == "Fazer Aposta":
                             except Exception:
                                 pass
 
-                        # Nomes disponíveis = todos exceto os já escolhidos (mas mantém o default)
                         default = saved.get(p) if p in saved else None
                         
-                        # Monta lista de opções disponíveis
-                        nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_escolhidos or n == default]
+                        # Coleta nomes já escolhidos em aposta_temp EXCETO o atual
+                        nomes_ja_escolhidos = set()
+                        for outro_personagem, nome_escolhido in aposta_temp.items():
+                            if outro_personagem != p and nome_escolhido and nome_escolhido != "":
+                                nomes_ja_escolhidos.add(nome_escolhido)
+                        
+                        # Monta lista de opções disponíveis (exclui já escolhidos em outros)
+                        nomes_disponiveis = [n for n in nomes_reais if n not in nomes_ja_escolhidos]
                         options = ["Faça sua aposta"] + nomes_disponiveis
                         
                         if default in nomes_reais and default in options:
@@ -431,13 +429,8 @@ if menu == "Fazer Aposta":
                             label_visibility="collapsed"
                         )
                         
-                        # Salva a escolha
+                        # Salva a escolha em aposta_temp
                         aposta_temp[p] = "" if sel == "Faça sua aposta" else sel
-                        if sel != "Faça sua aposta":
-                            nomes_ja_escolhidos.add(sel)
-                            aposta_temp[p] = sel
-                        else:
-                            aposta_temp[p] = ""
                     else:
                         st.write("")
 
