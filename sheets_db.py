@@ -134,7 +134,7 @@ def load_sheet_data(sheet_name):
                         result[user_id] = responsavel
             return result
         
-        # Formato identidades: Personagem | Nome Real | URL da Foto
+        # Formato identidades: Personagem | Nome Real | URL da Foto | Amigo
         elif sheet_name == "identidades" and len(headers) >= 2 and headers[0].lower() in ['personagem']:
             result = {}
             for row in all_values[1:]:
@@ -142,7 +142,8 @@ def load_sheet_data(sheet_name):
                     personagem = row[0]
                     result[personagem] = {
                         "nome": row[1] if len(row) > 1 else '',
-                        "foto": row[2] if len(row) > 2 else ''
+                        "foto": row[2] if len(row) > 2 else '',
+                        "amigo": row[3] if len(row) > 3 else ''
                     }
             return result
         
@@ -252,19 +253,20 @@ def save_sheet_data(sheet_name, data):
                 worksheet.update('A1:B1', rows)
             return True
         
-        # Formato identidades: Personagem | Nome Real | URL da Foto
+        # Formato identidades: Personagem | Nome Real | URL da Foto | Amigo
         elif sheet_name == "identidades" and isinstance(data, dict):
-            rows = [['Personagem', 'Nome Real', 'URL da Foto']]
+            rows = [['Personagem', 'Nome Real', 'URL da Foto', 'Amigo']]
             for personagem, info in data.items():
                 if isinstance(info, dict):
                     nome = info.get('nome', '')
                     foto = info.get('foto', '')
-                    rows.append([str(personagem), str(nome), str(foto)])
+                    amigo = info.get('amigo', '')
+                    rows.append([str(personagem), str(nome), str(foto), str(amigo)])
             
             if len(rows) > 1:
-                worksheet.update(f'A1:C{len(rows)}', rows)
+                worksheet.update(f'A1:D{len(rows)}', rows)
             else:
-                worksheet.update('A1:C1', rows)
+                worksheet.update('A1:D1', rows)
             return True
         
         # Formato revelacoes: Personagem | Pessoa
