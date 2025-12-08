@@ -331,7 +331,7 @@ if menu == "Fazer Aposta":
     acesso_apostas = not apostas_bloqueadas
     
     if apostas_bloqueadas:
-        st.warning("⏰ Apostas encerradas! Hoje é 14/12 após 17h.")
+        st.warning("⏰ Apostas encerradas!")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             senha_apostas = st.text_input("Senha de admin para acessar:", type="password", key="senha_apostas")
@@ -474,23 +474,30 @@ if menu == "Fazer Aposta":
             for col, p in zip(cols, row):
                 with col:
                     if p:
+                        # Pega informações do personagem (foto e amigo)
+                        foto = None
+                        amigo = None
+                        if isinstance(identidades, dict):
+                            data = identidades.get(p, {})
+                            if isinstance(data, dict):
+                                foto = data.get("foto")
+                                amigo = data.get("amigo")
+                        
                         # Container padronizado para cada personagem
+                        amigo_texto = f"<br><span style='color: #666; font-size: 0.9em;'>Amigo: {amigo}</span>" if amigo else ""
                         st.markdown(
                             f"""
                             <div style='text-align: center; background: rgba(255,255,255,0.9); 
                             border-radius: 12px; padding: 16px; margin-bottom: 12px; 
                             box-shadow: 0 4px 12px rgba(0,0,0,0.2);'>
                                 <b style='color: #1a1a1a; font-size: 1.1em;'>{p}</b>
+                                {amigo_texto}
                             </div>
                             """, 
                             unsafe_allow_html=True
                         )
                         
                         # mostra foto arredondada (se houver) - CENTRALIZADA
-                        foto = None
-                        if isinstance(identidades, dict):
-                            data = identidades.get(p, {})
-                            foto = data.get("foto") if isinstance(data, dict) else None
                         if foto:
                             try:
                                 html = _rounded_image_html(foto, width=120)
