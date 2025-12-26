@@ -318,14 +318,14 @@ if menu == "Fazer Aposta":
 
     st.header("✨Faça suas apostas:✨")
     
-    # Verifica se é dia 14/12 às 17h ou depois (horário de Brasília UTC-3)
+    # Verifica se é dia 26/12 às 19h ou depois (horário de Brasília UTC-3)
     from datetime import timezone, timedelta
     brasilia_tz = timezone(timedelta(hours=-3))
     agora_brasilia = datetime.now(brasilia_tz)
     
-    apostas_bloqueadas = (agora_brasilia.day == 14 and 
+    apostas_bloqueadas = (agora_brasilia.day == 26 and 
                          agora_brasilia.month == 12 and 
-                         agora_brasilia.hour >= 17)
+                         agora_brasilia.hour >= 19)
     
     # Se apostas bloqueadas, pede senha de admin
     acesso_apostas = not apostas_bloqueadas
@@ -372,17 +372,17 @@ if menu == "Fazer Aposta":
             st.info(f"Você está apostando como: *{user_id}*")
 
         # Vínculo do código ao nome real
-        # Verifica se é dia 14/12 a partir das 17h (horário de Brasília UTC-3)
+        # Verifica se é dia 26/12 a partir das 19h (horário de Brasília UTC-3)
         from datetime import timezone, timedelta
         brasilia_tz = timezone(timedelta(hours=-3))
         agora_brasilia = datetime.now(brasilia_tz)
         
-        # Disponível o dia todo no dia 14/12, mas OBRIGATÓRIO a partir das 17h
-        dia_14 = (agora_brasilia.day == 14 and agora_brasilia.month == 12)
-        apos_17h = (agora_brasilia.hour >= 17)
+        # Disponível o dia todo no dia 26/12, mas OBRIGATÓRIO a partir das 19h
+        dia_26 = (agora_brasilia.day == 26 and agora_brasilia.month == 12)
+        apos_19h = (agora_brasilia.hour >= 19)
         
-        vinculo_obrigatorio = dia_14 and apos_17h
-        vinculo_disponivel = dia_14
+        vinculo_obrigatorio = dia_26 and apos_19h
+        vinculo_disponivel = dia_26
         
         # Se for antes do dia 14/12, pede senha para vincular
         acesso_vinculo = vinculo_disponivel
@@ -430,7 +430,7 @@ if menu == "Fazer Aposta":
                     save_json("codigos_identidade.json", vinculos)
                     st.success(f"Código vinculado ao nome real: {nome_escolhido}")
         
-        # Se for após 17h do dia 14/12, apenas mostra backup e não permite apostas
+        # Se for após 19h do dia 26/12, apenas mostra backup e não permite apostas
         if vinculo_obrigatorio:
             st.markdown("---")
             st.info("⏰ Apostas encerradas! Veja abaixo suas apostas já realizadas:")
@@ -595,11 +595,11 @@ elif menu == "Revelar Identidades":
     with col2:
         st.header("🔓 Revelação Oficial")
     
-    # Verifica se é dia 14/12
+    # Verifica se é dia 26/12
     hoje = datetime.now()
-    dia_revelacao = (hoje.day == 14 and hoje.month == 12)
+    dia_revelacao = (hoje.day == 26 and hoje.month == 12)
     
-    # Solicita senha apenas se NÃO for dia 14/12
+    # Solicita senha apenas se NÃO for dia 26/12
     acesso_liberado = dia_revelacao
     
     if not dia_revelacao:
@@ -611,7 +611,7 @@ elif menu == "Revelar Identidades":
             acesso_liberado = True
             st.success("Acesso liberado!")
     else:
-        st.info("🎉 Hoje é dia 14/12! Vamos para as revelações.")
+        st.info("🎉 Hoje é dia 26/12! Vamos para as revelações.")
 
     if acesso_liberado:
         st.write("Selecione as revelações oficiais:")
@@ -776,9 +776,9 @@ elif menu == "Ranking":
 
         resultados = sorted(resultados, key=lambda x: x[1], reverse=True)
         
-        # Verifica se hoje é 14/12 para revelar nomes reais
+        # Verifica se hoje é 26/12 para revelar nomes reais
         hoje = datetime.now()
-        dia_revelacao = (hoje.day == 14 and hoje.month == 12)
+        dia_revelacao = (hoje.day == 26 and hoje.month == 12)
         
         # Renderiza leaderboard estilizado
         for i, (player, score, acertados) in enumerate(resultados, 1):
